@@ -17,17 +17,11 @@
 //
 // Network topology
 //
-//  n0
-//     \ 5 Mb/s, 2ms
-//      \          1.5Mb/s, 10ms
-//       n2 -------------------------n3
-//      /
-//     / 5 Mb/s, 2ms
-//   n1
+//      300 Mb/s, 2ms
+//  n0----------------n1
 //
 // - all links are point-to-point links with indicated one-way BW/delay
 // - CBR/UDP flows from n0 to n3, and from n3 to n1
-// - FTP/TCP flow from n0 to n3, starting at time 1.2 to time 1.35 sec.
 // - UDP packet size of 210 bytes, with per-packet interval 0.00375 sec.
 //   (i.e., DataRate of 448,000 bps)
 // - DropTail queues
@@ -76,10 +70,10 @@ main(int argc, char* argv[])
     // topologies, we could configure a node factory.
     NS_LOG_INFO("Create nodes.");
     NodeContainer c;
-    c.Create(4);
-    NodeContainer n0n2 = NodeContainer(c.Get(0), c.Get(2));
-    NodeContainer n1n2 = NodeContainer(c.Get(1), c.Get(2));
-    NodeContainer n3n2 = NodeContainer(c.Get(3), c.Get(2));
+    c.Create(2);
+    // NodeContainer n0n2 = NodeContainer(c.Get(0), c.Get(2));
+    // NodeContainer n1n2 = NodeContainer(c.Get(1), c.Get(2));
+    // NodeContainer n3n2 = NodeContainer(c.Get(3), c.Get(2));
 
     InternetStackHelper internet;
     internet.Install(c);
@@ -87,27 +81,27 @@ main(int argc, char* argv[])
     // We create the channels first without any IP addressing information
     NS_LOG_INFO("Create channels.");
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("5Mbps"));
+    p2p.SetDeviceAttribute("DataRate", StringValue("300Mbps"));
     p2p.SetChannelAttribute("Delay", StringValue("2ms"));
-    NetDeviceContainer d0d2 = p2p.Install(n0n2);
+    NetDeviceContainer d0d1 = p2p.Install(c);
 
-    NetDeviceContainer d1d2 = p2p.Install(n1n2);
+    // NetDeviceContainer d1d2 = p2p.Install(n1n2);
 
-    p2p.SetDeviceAttribute("DataRate", StringValue("1500kbps"));
-    p2p.SetChannelAttribute("Delay", StringValue("10ms"));
-    NetDeviceContainer d3d2 = p2p.Install(n3n2);
+    // p2p.SetDeviceAttribute("DataRate", StringValue("1500kbps"));
+    // p2p.SetChannelAttribute("Delay", StringValue("10ms"));
+    // NetDeviceContainer d3d2 = p2p.Install(n3n2);
 
     // Later, we add IP addresses.
     NS_LOG_INFO("Assign IP Addresses.");
     Ipv4AddressHelper ipv4;
-    ipv4.SetBase("10.1.1.0", "255.255.255.0");
-    Ipv4InterfaceContainer i0i2 = ipv4.Assign(d0d2);
+    ipv4.SetBase("192.168.211.0", "255.255.255.0");
+    Ipv4InterfaceContainer i0i1 = ipv4.Assign(d0d1);
 
-    ipv4.SetBase("10.1.2.0", "255.255.255.0");
-    Ipv4InterfaceContainer i1i2 = ipv4.Assign(d1d2);
+    // ipv4.SetBase("10.1.2.0", "255.255.255.0");
+    // Ipv4InterfaceContainer i1i2 = ipv4.Assign(d1d2);
 
-    ipv4.SetBase("10.1.3.0", "255.255.255.0");
-    Ipv4InterfaceContainer i3i2 = ipv4.Assign(d3d2);
+    // ipv4.SetBase("10.1.3.0", "255.255.255.0");
+    // Ipv4InterfaceContainer i3i2 = ipv4.Assign(d3d2);
 
     // Create router nodes, initialize routing database and set up the routing
     // tables in the nodes.
@@ -118,7 +112,7 @@ main(int argc, char* argv[])
     NS_LOG_INFO("Create Applications.");
     uint16_t port = 9; // Discard port (RFC 863)
     OnOffHelper onoff("ns3::UdpSocketFactory",
-                      Address(InetSocketAddress(i3i2.GetAddress(0), port)));
+                      Address(InetSocketAddress(i0i1.GetAddress(1), port)));
     onoff.SetConstantRate(DataRate("448kb/s"));
     ApplicationContainer apps = onoff.Install(c.Get(0));
     apps.Start(Seconds(1.0));
@@ -127,20 +121,20 @@ main(int argc, char* argv[])
     // Create a packet sink to receive these packets
     PacketSinkHelper sink("ns3::UdpSocketFactory",
                           Address(InetSocketAddress(Ipv4Address::GetAny(), port)));
-    apps = sink.Install(c.Get(3));
+    apps = sink.Install(c.Get(1));
     apps.Start(Seconds(1.0));
     apps.Stop(Seconds(10.0));
 
     // Create a similar flow from n3 to n1, starting at time 1.1 seconds
-    onoff.SetAttribute("Remote", AddressValue(InetSocketAddress(i1i2.GetAddress(0), port)));
-    apps = onoff.Install(c.Get(3));
-    apps.Start(Seconds(1.1));
-    apps.Stop(Seconds(10.0));
+    // onoff.SetAttribute("Remote", AddressValue(InetSocketAddress(i1i2.GetAddress(0), port)));
+    // apps = onoff.Install(c.Get(3));
+    // apps.Start(Seconds(1.1));
+    // apps.Stop(Seconds(10.0));
 
     // Create a packet sink to receive these packets
-    apps = sink.Install(c.Get(1));
-    apps.Start(Seconds(1.1));
-    apps.Stop(Seconds(10.0));
+    // apps = sink.Install(c.Get(1));
+    // apps.Start(Seconds(1.1));
+    // apps.Stop(Seconds(10.0));
 
     AsciiTraceHelper ascii;
     p2p.EnableAsciiAll(ascii.CreateFileStream("simple-global-routing.tr"));
@@ -150,7 +144,6 @@ main(int argc, char* argv[])
     FlowMonitorHelper flowmonHelper;
     if (enableFlowMonitor)
     {
-	NS_LOG_INFO("Enabled Flow Monitor");
         flowmonHelper.InstallAll();
     }
 
@@ -161,6 +154,7 @@ main(int argc, char* argv[])
 
     if (enableFlowMonitor)
     {
+	NS_LOG_INFO("Enabled Flow Monitor");
         flowmonHelper.SerializeToXmlFile("simple-global-routing.flowmon", false, false);
     }
 
