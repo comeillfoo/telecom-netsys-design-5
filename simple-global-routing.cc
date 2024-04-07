@@ -120,7 +120,7 @@ main(int argc, char* argv[])
 
     } else {
 	// Generate TCP/UDP for maximum bandwidth
-	BulkSendHelper bulksend("ns3::UdpSocketFactory",
+	BulkSendHelper bulksend("ns3::TcpSocketFactory",
 				Address(InetSocketAddress(i0i1.GetAddress(1), port)));
 	// Set the amount of data to send in bytes. Zero is unlimited
 	const uint32_t maxBytes = 0;
@@ -130,7 +130,7 @@ main(int argc, char* argv[])
 	apps.Start(Seconds(1.0));
 	apps.Stop(Seconds(10.0));
 
-	PacketSinkHelper sink("ns3::UdpSocketFactory",
+	PacketSinkHelper sink("ns3::TcpSocketFactory",
 			      Address(InetSocketAddress(Ipv4Address::GetAny(), port)));
 	apps = sink.Install(c.Get(1));
 	apps.Start(Seconds(1.0));
