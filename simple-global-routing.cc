@@ -17,13 +17,8 @@
 //
 // Network topology
 //
-//      300 Mb/s, 2ms
 //  n0----------------n1
 //
-// - all links are point-to-point links with indicated one-way BW/delay
-// - CBR/UDP flows from n0 to n3, and from n3 to n1
-// - UDP packet size of 210 bytes, with per-packet interval 0.00375 sec.
-//   (i.e., DataRate of 448,000 bps)
 // - DropTail queues
 // - Tracing of queues and packet receptions to file "simple-global-routing.tr"
 
@@ -84,8 +79,10 @@ main(int argc, char* argv[])
     // We create the channels first without any IP addressing information
     NS_LOG_INFO("Create channels.");
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue("300Mbps"));
-    p2p.SetChannelAttribute("Delay", StringValue("2ms"));
+    p2p.SetQueue ("ns3::DropTailQueue",
+              "MaxSize", StringValue ("16p"));
+    p2p.SetDeviceAttribute("DataRate", StringValue("24Mbps"));
+    p2p.SetChannelAttribute("Delay", StringValue("12ms"));
     NetDeviceContainer d0d1 = p2p.Install(c);
 
     // Later, we add IP addresses.
