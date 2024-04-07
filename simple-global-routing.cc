@@ -100,6 +100,7 @@ main(int argc, char* argv[])
 
 
     const uint16_t port = 5201;
+    ApplicationContainer apps;
     if (rttOrBandwidthGenerator) {
 	// Generate slowed TCP for RTT
     	// Create the OnOff application to send TCP segments at a rate of 1Mb/s
@@ -107,7 +108,7 @@ main(int argc, char* argv[])
     	OnOffHelper onoff("ns3::TcpSocketFactory",
         	          Address(InetSocketAddress(i0i1.GetAddress(1), port)));
     	onoff.SetConstantRate(DataRate("1Mb/s"));
-    	ApplicationContainer apps = onoff.Install(c.Get(0));
+    	apps = onoff.Install(c.Get(0));
     	apps.Start(Seconds(1.0));
     	apps.Stop(Seconds(10.0));
 
@@ -123,10 +124,10 @@ main(int argc, char* argv[])
 	BulkSendHelper bulksend("ns3::TcpSocketFactory",
 				Address(InetSocketAddress(i0i1.GetAddress(1), port)));
 	// Set the amount of data to send in bytes. Zero is unlimited
-	const uint32_t maxBytes = 0;
+	const uint32_t maxBytes = 30 * 1024 * 1024;
 	bulksend.SetAttribute("MaxBytes", UintegerValue(maxBytes));
 
-	ApplicationContainer apps = bulksend.Install(c.Get(0));
+	apps = bulksend.Install(c.Get(0));
 	apps.Start(Seconds(1.0));
 	apps.Stop(Seconds(10.0));
 
@@ -162,5 +163,8 @@ main(int argc, char* argv[])
     }
 
     Simulator::Destroy();
+
+    Ptr<PacketSink> sink1 = DynamicCast<PacketSink>(apps.Get(0));
+    std::cout << "Total Bytes Received: " << sink1->GetTotalRx() << std::endl;
     return 0;
 }
