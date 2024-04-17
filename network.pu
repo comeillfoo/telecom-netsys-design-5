@@ -1,0 +1,12 @@
+@startuml
+
+title Экспериментальный ns3-стенд
+nwdiag {
+    network LAN {
+        address = "192.168.211.0/24, 24Mbps";
+        laptop [address = "192.168.211.1", description = "n0\nОтправитель"];
+        mobile_phone [address = "192.168.211.2", description = "n1\nПолучатель"];
+    }
+}
+
+@enduml
