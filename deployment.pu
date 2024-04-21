@@ -1,0 +1,32 @@
+@startuml
+
+node "Node 1" as n1 {
+  [InternetStack] as i1
+  [PointToPoint] as p1
+  [NetDeviceContainer] as netdev1
+  [Ipv4InterfaceContainer] as ip1
+  [ApplicationContainer] as a1
+  [OnOffApplication] as proto1
+}
+
+node "Node 2" as n2 {
+  [InternetStack] as i2
+  [PointToPoint] as p2
+  [NetDeviceContainer] as netdev2
+  [Ipv4InterfaceContainer] as ip2
+  [ApplicationContainer] as a2
+  [PacketSink] as proto2
+}
+
+proto1 -- proto2 : TCP
+ip1 -- ip2 : IPv4
+
+p1 -(0- netdev1
+p2 -(0- netdev2
+netdev1 -(0- ip1
+netdev2 -(0- ip2
+ip1 -(0- a1
+ip2 -(0- a2
+a1 -(0- proto1
+a2 -(0- proto2
+@enduml
